@@ -10,10 +10,13 @@ app.use(cors());
 app.use(express.json());
 
 const authRoutes = require('./modules/auth/authRoutes');
+const recordRoutes = require('./modules/records/recordRoutes');
+const analyticsRoutes = require('./modules/analytics/analyticsRoutes');
 
 // Routes will be added here
 app.use('/api/auth', authRoutes);
-// app.use('/api/records', recordRoutes);
+app.use('/api/records', recordRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

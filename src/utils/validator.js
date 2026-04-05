@@ -11,6 +11,14 @@ const loginSchema = z.object({
   password: z.string().min(6),
 });
 
+const recordSchema = z.object({
+  amount: z.number().positive(),
+  type: z.enum(['income', 'expense']),
+  category: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD format'),
+  notes: z.string().optional(),
+});
+
 const validate = (schema) => (req, res, next) => {
   try {
     schema.parse(req.body);
@@ -27,4 +35,5 @@ module.exports = {
   validate,
   registerSchema,
   loginSchema,
+  recordSchema,
 };
