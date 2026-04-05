@@ -12,6 +12,10 @@ app.use(express.json());
 const authRoutes = require('./modules/auth/authRoutes');
 const recordRoutes = require('./modules/records/recordRoutes');
 const analyticsRoutes = require('./modules/analytics/analyticsRoutes');
+const setupSwagger = require('./docs/swagger');
+
+// Setup Swagger UI
+setupSwagger(app);
 
 // Routes will be added here
 app.use('/api/auth', authRoutes);

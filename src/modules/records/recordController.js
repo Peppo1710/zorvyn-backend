@@ -1,5 +1,6 @@
 const { pool } = require('../../config/db');
 const { canReadRecord, canUpdateRecord, canDeleteRecord } = require('../../policies/recordPolicy');
+const { logAction } = require('../audit/auditService');
 
 const createRecord = async (req, res, next) => {
   try {
@@ -11,7 +12,8 @@ const createRecord = async (req, res, next) => {
       [req.user.id, amount, type, category, date, notes]
     );
 
-    // TODO: Log audit
+    // log audit
+    await logAction(req.user.id, 'CREATE', 'record', newRecord.rows[0].id);
 
     res.status(201).json(newRecord.rows[0]);
   } catch (error) {
@@ -135,7 +137,8 @@ const updateRecord = async (req, res, next) => {
       [amount, type, category, date, notes, id]
     );
 
-    // TODO: log audit
+    // log audit
+    await logAction(req.user.id, 'UPDATE', 'record', id);
 
     res.status(200).json(updatedRecord.rows[0]);
   } catch (error) {
@@ -162,7 +165,8 @@ const deleteRecord = async (req, res, next) => {
       [id]
     );
 
-    // TODO: log audit
+    // log audit
+    await logAction(req.user.id, 'DELETE', 'record', id);
 
     res.status(200).json({ message: 'Record soft-deleted successfully' });
   } catch (error) {

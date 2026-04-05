@@ -1,4 +1,5 @@
 const { pool } = require('../../config/db');
+const { generateInsight } = require('../../services/insightService');
 
 const getDashboardStats = async (req, res, next) => {
   try {
@@ -72,6 +73,53 @@ const getDashboardStats = async (req, res, next) => {
   }
 };
 
+const getInsights = async (req, res, next) => {
+  try {
+    let queryArgs = [];
+    let queryConditions = ['is_deleted = false'];
+    if (req.user.role === 'viewer') {
+      queryConditions.push(`user_id = $1`);
+      queryArgs.push(req.user.id);
+    }
+
+    const whereClause = `WHERE ${queryConditions.join(' AND ')}`;
+
+    // Quick fetch for summary
+    const summaryQuery = await pool.query(
+      `SELECT type, SUM(amount) as total FROM records ${whereClause} GROUP BY type`,
+      queryArgs
+    );
+
+    let totalIncome = 0;
+    let totalExpenses = 0;
+    summaryQuery.rows.forEach(row => {
+      if (row.type === 'income') totalIncome += parseFloat(row.total);
+      if (row.type === 'expense') totalExpenses += parseFloat(row.total);
+    });
+
+    const categoryQuery = await pool.query(
+      `SELECT category, SUM(amount) as total FROM records ${whereClause} GROUP BY category`,
+      queryArgs
+    );
+
+    const financialData = {
+      summary: {
+        totalIncome,
+        totalExpenses,
+        netBalance: totalIncome - totalExpenses
+      },
+      categoryBreakdown: categoryQuery.rows.map(r => ({ category: r.category, total: parseFloat(r.total) }))
+    };
+
+    const insightStr = await generateInsight(financialData);
+
+    res.status(200).json({ insights: insightStr });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboardStats,
+  getInsights
 };
