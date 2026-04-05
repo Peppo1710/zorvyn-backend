@@ -9,8 +9,10 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+const authRoutes = require('./modules/auth/authRoutes');
+
 // Routes will be added here
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 // app.use('/api/records', recordRoutes);
 
 // Health check
