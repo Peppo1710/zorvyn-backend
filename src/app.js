@@ -22,7 +22,22 @@ const apiLimiter = rateLimit({
 });
 
 // Security and middleware
-app.use(helmet());
+// CSP is configured to allow Swagger UI assets (scripts, styles, worker blobs)
+// while keeping all other Helmet protections (HSTS, X-Frame-Options, etc.) active.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        workerSrc: ["'self'", "blob:"],
+        connectSrc: ["'self'"],
+      },
+    },
+  })
+);
 app.use(cors());
 app.use(express.json());
 
