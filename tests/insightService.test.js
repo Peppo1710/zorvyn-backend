@@ -43,12 +43,23 @@ describe('insightService', () => {
       expect(createMock).toHaveBeenCalledTimes(1);
     });
 
+    it('returns early message when financial data is empty', async () => {
+      const financialData = {
+        summary: { totalIncome: 0, totalExpenses: 0, netBalance: 0 },
+        categoryBreakdown: []
+      };
+
+      const result = await insightService.generateInsight(financialData);
+      expect(result).toBe('Not enough financial data to generate insights. Please add some income and expense records first.');
+      expect(createMock).not.toHaveBeenCalled();
+    });
+
     it('returns fallback string if choices are empty', async () => {
       createMock.mockResolvedValueOnce({ choices: [] });
 
       const financialData = {
-        summary: { totalIncome: 0, totalExpenses: 0, netBalance: 0 },
-        categoryBreakdown: []
+        summary: { totalIncome: 5000, totalExpenses: 2000, netBalance: 3000 },
+        categoryBreakdown: [{ category: 'Food', total: 2000 }]
       };
 
       const result = await insightService.generateInsight(financialData);
@@ -59,8 +70,8 @@ describe('insightService', () => {
       createMock.mockRejectedValueOnce(new Error('Network error'));
 
       const financialData = {
-        summary: { totalIncome: 0, totalExpenses: 0, netBalance: 0 },
-        categoryBreakdown: []
+        summary: { totalIncome: 5000, totalExpenses: 2000, netBalance: 3000 },
+        categoryBreakdown: [{ category: 'Food', total: 2000 }]
       };
 
       await expect(insightService.generateInsight(financialData)).rejects.toThrow('Unable to generate insights at this time.');

@@ -115,7 +115,11 @@ const getInsights = async (req, res, next) => {
 
     res.status(200).json({ insights: insightStr });
   } catch (error) {
-    next(error);
+    // Return the specific error message from the insight service
+    res.status(500).json({
+      error: 'Error',
+      message: error.message || 'Unable to generate insights at this time.',
+    });
   }
 };
 
