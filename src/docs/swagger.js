@@ -5,7 +5,8 @@ const swaggerDocument = {
   info: {
     title: 'Zorvyn Finance API',
     version: '1.0.0',
-    description: 'API documentation for Zorvyn Finance Backend',
+    description:
+      'API documentation for Zorvyn Finance Backend. Roles: viewer (read-only records & dashboard), analyst (create/update/delete records + insights), admin (full access including user list and audit logs).',
   },
   components: {
     securitySchemes: {
@@ -65,26 +66,58 @@ const swaggerDocument = {
         responses: { 200: { description: 'Success' } },
       },
     },
+    '/api/users/me': {
+      get: {
+        summary: 'Current user profile',
+        responses: { 200: { description: 'Success' } },
+      },
+    },
+    '/api/users': {
+      get: {
+        summary: 'List users (admin only)',
+        responses: { 200: { description: 'Success' } },
+      },
+    },
+    '/api/users/{id}': {
+      get: {
+        summary: 'Get user by id (self or admin)',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+          },
+        ],
+        responses: { 200: { description: 'Success' } },
+      },
+    },
+    '/api/audit/logs': {
+      get: {
+        summary: 'List audit logs (admin only)',
+        responses: { 200: { description: 'Success' } },
+      },
+    },
     '/api/records': {
       get: {
-        summary: 'Get all financial records',
+        summary: 'List financial records (search, filters, pagination)',
         responses: { 200: { description: 'Success' } },
       },
       post: {
-        summary: 'Create a financial record',
-        responses: { 201: { description: 'Created' } },
+        summary: 'Create a record (analyst or admin)',
+        responses: { 201: { description: 'Created' }, 403: { description: 'Forbidden for viewer' } },
       },
     },
     '/api/analytics/dashboard': {
       get: {
-        summary: 'Get dashboard stats',
+        summary: 'Dashboard stats',
         responses: { 200: { description: 'Success' } },
       },
     },
     '/api/analytics/insights/generate': {
       post: {
-        summary: 'Generate smart financial insights using AI',
-        responses: { 200: { description: 'Success' } },
+        summary: 'Generate AI insights (analyst or admin)',
+        responses: { 200: { description: 'Success' }, 403: { description: 'Forbidden for viewer' } },
       },
     },
   },

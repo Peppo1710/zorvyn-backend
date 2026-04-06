@@ -3,20 +3,35 @@ const { canReadRecord, canUpdateRecord, canDeleteRecord } = require('../../polic
 const { logAction } = require('../audit/auditService');
 
 const createRecord = async (req, res, next) => {
+  const client = await pool.connect();
   try {
     const { amount, type, category, date, notes } = req.body;
-    
-    const newRecord = await pool.query(
+
+    await client.query('BEGIN');
+
+    const newRecord = await client.query(
       `INSERT INTO records (user_id, amount, type, category, date, notes) 
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [req.user.id, amount, type, category, date, notes]
     );
 
-    // log audit
-    await logAction(req.user.id, 'CREATE', 'record', newRecord.rows[0].id);
+    await client.query(
+      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id)
+       VALUES ($1, $2, $3, $4)`,
+      [req.user.id, 'CREATE', 'record', newRecord.rows[0].id]
+    );
+
+    await client.query('COMMIT');
+    client.release();
 
     res.status(201).json(newRecord.rows[0]);
   } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {
+      // ignore rollback error
+    }
+    client.release();
     next(error);
   }
 };
@@ -111,65 +126,103 @@ const getRecordById = async (req, res, next) => {
 };
 
 const updateRecord = async (req, res, next) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
     const { amount, type, category, date, notes } = req.body;
-    
-    const record = await pool.query('SELECT * FROM records WHERE id = $1 AND is_deleted = false', [id]);
-    
+
+    await client.query('BEGIN');
+
+    const record = await client.query('SELECT * FROM records WHERE id = $1 AND is_deleted = false', [id]);
+
     if (record.rows.length === 0) {
+      await client.query('ROLLBACK');
+      client.release();
       return res.status(404).json({ error: 'Not Found', message: 'Record not found' });
     }
 
     if (!canUpdateRecord(req.user, record.rows[0])) {
+      await client.query('ROLLBACK');
+      client.release();
       return res.status(403).json({ error: 'Forbidden', message: 'You do not have permission to update this record' });
     }
 
-    const updatedRecord = await pool.query(
-      `UPDATE records 
-       SET amount = COALESCE($1, amount), 
-           type = COALESCE($2, type), 
-           category = COALESCE($3, category), 
-           date = COALESCE($4, date), 
+    const updatedRecord = await client.query(
+      `UPDATE records
+       SET amount = COALESCE($1, amount),
+           type = COALESCE($2, type),
+           category = COALESCE($3, category),
+           date = COALESCE($4, date),
            notes = COALESCE($5, notes),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $6 RETURNING *`,
-      [amount, type, category, date, notes, id]
+      [amount ?? null, type ?? null, category ?? null, date ?? null, notes ?? null, id]
     );
 
-    // log audit
-    await logAction(req.user.id, 'UPDATE', 'record', id);
+    await client.query(
+      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id)
+       VALUES ($1, $2, $3, $4)`,
+      [req.user.id, 'UPDATE', 'record', id]
+    );
+
+    await client.query('COMMIT');
+    client.release();
 
     res.status(200).json(updatedRecord.rows[0]);
   } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {
+      // ignore rollback error
+    }
+    client.release();
     next(error);
   }
 };
 
 const deleteRecord = async (req, res, next) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
 
-    const record = await pool.query('SELECT * FROM records WHERE id = $1 AND is_deleted = false', [id]);
-    
+    await client.query('BEGIN');
+
+    const record = await client.query('SELECT * FROM records WHERE id = $1 AND is_deleted = false', [id]);
+
     if (record.rows.length === 0) {
+      await client.query('ROLLBACK');
+      client.release();
       return res.status(404).json({ error: 'Not Found', message: 'Record not found' });
     }
 
     if (!canDeleteRecord(req.user, record.rows[0])) {
+      await client.query('ROLLBACK');
+      client.release();
       return res.status(403).json({ error: 'Forbidden', message: 'You do not have permission to delete this record' });
     }
 
-    await pool.query(
+    await client.query(
       `UPDATE records SET is_deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id]
     );
 
-    // log audit
-    await logAction(req.user.id, 'DELETE', 'record', id);
+    await client.query(
+      `INSERT INTO audit_logs (user_id, action, resource_type, resource_id)
+       VALUES ($1, $2, $3, $4)`,
+      [req.user.id, 'DELETE', 'record', id]
+    );
+
+    await client.query('COMMIT');
+    client.release();
 
     res.status(200).json({ message: 'Record soft-deleted successfully' });
   } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {
+      // ignore rollback error
+    }
+    client.release();
     next(error);
   }
 };

@@ -19,15 +19,20 @@ const recordSchema = z.object({
   notes: z.string().optional(),
 });
 
+const recordUpdateSchema = recordSchema.partial();
+
 const validate = (schema) => (req, res, next) => {
   try {
     schema.parse(req.body);
     next();
   } catch (error) {
-    res.status(400).json({
-      error: 'Invalid input',
-      message: error.errors,
-    });
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Invalid input',
+        message: error.issues,
+      });
+    }
+    next(error);
   }
 };
 
@@ -36,4 +41,5 @@ module.exports = {
   registerSchema,
   loginSchema,
   recordSchema,
+  recordUpdateSchema,
 };

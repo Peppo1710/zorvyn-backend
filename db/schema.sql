@@ -32,3 +32,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   resource_id UUID,
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Pre-aggregated analytics snapshots (updated by cron)
+CREATE TABLE IF NOT EXISTS analytics_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  snapshot_date DATE NOT NULL UNIQUE,
+  total_income DECIMAL(14, 2) NOT NULL DEFAULT 0,
+  total_expenses DECIMAL(14, 2) NOT NULL DEFAULT 0,
+  net_balance DECIMAL(14, 2) NOT NULL DEFAULT 0,
+  record_count INTEGER NOT NULL DEFAULT 0,
+  payload JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

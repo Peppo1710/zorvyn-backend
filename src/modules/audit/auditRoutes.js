@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const analyticsController = require('./analyticsController');
+const auditController = require('./auditController');
 const authMiddleware = require('../../middlewares/authMiddleware');
 const { allowRoles } = require('../../middlewares/roleMiddleware');
 
 router.use(authMiddleware);
+router.use(allowRoles('admin'));
 
-router.get('/dashboard', analyticsController.getDashboardStats);
-router.post('/insights/generate', allowRoles('analyst', 'admin'), analyticsController.getInsights);
+router.get('/logs', auditController.listAuditLogs);
 
 module.exports = router;
