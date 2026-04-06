@@ -3,6 +3,7 @@ const env = require("./env");
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
+  family: 4, // Force IPv4 — prevents ENETUNREACH on VMs without IPv6
 });
 
 pool.on("connect", () => {
