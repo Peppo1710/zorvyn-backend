@@ -122,7 +122,7 @@ const swaggerDocument = {
             name: 'id',
             in: 'path',
             required: true,
-            schema: { type: 'string', format: 'uuid' },
+            schema: { type: 'string', description: 'ID' },
           },
         ],
         responses: { 200: { description: 'Success' } },
@@ -177,7 +177,7 @@ const swaggerDocument = {
             name: 'id',
             in: 'path',
             required: true,
-            schema: { type: 'string', format: 'uuid' },
+            schema: { type: 'string', description: 'ID' },
           },
         ],
         responses: {
@@ -193,7 +193,7 @@ const swaggerDocument = {
             name: 'id',
             in: 'path',
             required: true,
-            schema: { type: 'string', format: 'uuid' },
+            schema: { type: 'string', description: 'ID' },
           },
         ],
         requestBody: {
@@ -219,7 +219,7 @@ const swaggerDocument = {
             name: 'id',
             in: 'path',
             required: true,
-            schema: { type: 'string', format: 'uuid' },
+            schema: { type: 'string', description: 'ID' },
           },
         ],
         responses: {
